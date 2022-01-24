@@ -1,0 +1,16 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: EventListener
+metadata:
+  name: flux-event-listener
+spec:
+  serviceAccountName: flux-notifications-sa
+  triggers:
+    - name: flux-notification-trigger
+      interceptors:
+        - cel:
+            filter: header.canonical('Gotk-Component') == 'source-controller' &&
+              body.involvedObject.kind == 'GitRepository'
+      template:
+        name: flux-notification-template
+      bindings:
+        - ref: flux-notification-binding

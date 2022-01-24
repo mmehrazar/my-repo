@@ -1,0 +1,8 @@
+apiVersion: notification.toolkit.fluxcd.io/v1beta1
+kind: Provider
+metadata:
+  name: tekton-el-provider
+  namespace: flux-system  
+spec:
+  type: generic
+  address: http://el-flux-event-listener.default.svc.cluster.local:8080/

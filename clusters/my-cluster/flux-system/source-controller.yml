@@ -1,0 +1,28 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerTemplate
+metadata:
+  name: flux-notification-template
+spec:
+  params:
+    - name: message
+      description: message
+    - name: repository
+      description: the notifying repository
+    - name: namespace
+      description: the namespace for the notifying repository
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1beta1
+      kind: PipelineRun
+      metadata:
+        annotations:
+        name: flux-notification-run-$(uid)
+      spec:
+        params:
+          - name: message
+            value: $(tt.params.message)
+          - name: repository
+            value: $(tt.params.repository)
+          - name: namespace
+            value: $(tt.params.namespace)
+        pipelineRef:
+          name: flux-demo-pipeline

@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1alpha1
+kind: TriggerBinding
+metadata:
+  name: flux-notification-binding
+spec:
+  params:
+    - name: message
+      value: $(body.message)
+    - name: repository
+      value: $(body.involvedObject.name)
+    - name: namespace
+      value: $(body.involvedObject.namespace)
