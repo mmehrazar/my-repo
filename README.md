@@ -2,7 +2,8 @@
 
 Flux to Tekton
 
-Requirements
+Requirements:
+
 Install Flux from the Bootstrap instructions.
 Install Tekton Pipeline using the “Installation One-liner”.
 
