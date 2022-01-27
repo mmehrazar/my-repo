@@ -1,49 +1,24 @@
 # my-repo
+
 Flux to Tekton
-Dec 6, 2020
 
-Back in August, Weaveworks announced Fluxv2, which is a toolkit-style reboot of their Flux GitOps tooling.
-
-I like the approach they’re taking, each of the parts is combined with their flux tool to build GitOps workflows, but they’re useful standalone too if you want to build your own workflow.
-
-Not unreasonably, it doesn’t come with any sort of “pipeline” mechanism for building CI or CD pipelines, but with the Notification Controller you can drive Tekton pipelines, for example, maybe you want to trigger some process when a new commit is available.
-
-The following configuration assumes you’re reasonably familiar with Tekton.
-
-Requirements
-Install Flux from the Bootstrap instructions.
-Install Tekton Pipeline using the “Installation One-liner”.
 
 $ kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.18.1/release.yaml
 Install Tekton Triggers.
 
 $ kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/previous/v0.10.1/release.yaml
 $ flux bootstrap github --owner=$GITHUB_USER --repository=fleet-infra --branch=main --path=staging-cluster --personal
-► connecting to github.com
-✔ repository created
-✔ repository cloned
-✚ generating manifests
-✔ components manifests pushed
-► installing components in flux-system namespace
-<snip>
-✔ install completed
-► configuring deploy key
-✔ deploy key configured
-► generating sync manifests
-✔ sync manifests pushed
-► applying sync manifests
-◎ waiting for cluster sync
-✔ bootstrap finished
+
 $ kubectl apply -f https://storage.googleapis.com/tekton-releases/pipeline/previous/v0.18.1/release.yaml
-namespace/tekton-pipelines created
-<snip>
+
 service/tekton-pipelines-webhook created
 $ kubectl apply -f https://storage.googleapis.com/tekton-releases/triggers/previous/v0.10.1/release.yaml
 podsecuritypolicy.policy/tekton-triggers created
 <snip>
 deployment.apps/tekton-triggers-webhook created
-Configuring Tekton
-For this example, I’m going to create a really simple Pipeline which is triggered by notifications from the Source Controller.
+
+  
+  Configuring Tekton
 
 The event documentation could do with a JSON example for folks who don’t read Go natively, but the requests look like this:
 
@@ -185,10 +160,10 @@ spec:
       value: $(body.involvedObject.name)
     - name: namespace
       value: $(body.involvedObject.namespace)
-There is some permission configuration to allow an EventListener to run in a namespace, this is a long set of configuration items, which while important for getting the EventListener to work isn’t really connected to setting up the notifications, I’ve provided the yaml here.
+There is some permission configuration to allow an EventListener to run in a namespace, this is a long set of configuration items, which while important for getting the EventListener to work isn’t really connected to setting up the notifications.
 
 Configuring Flux
-First off, this needs a random token secret for the receiver, I use this script to generate a secret with a token:
+First off, this needs a random token secret for the receiver to generate a secret with a token:
 
 #!/bin/sh
 # Put this in generate_secret.sh and chmod +x
@@ -200,7 +175,7 @@ Creating a secret is as simple as:
 $ ./generate_secret.sh generic-receiver-token
 secret/generic-receiver-token created
 Creating a Receiver
-Toolkit components send HTTP requests to an HTTP endpoint that is part of the notification-controller, so I have to configure a receiver for this:
+Toolkit components send HTTP requests to an HTTP endpoint that is part of the notification-controller, so have to configure a receiver for this:
 
 apiVersion: notification.toolkit.fluxcd.io/v1beta1
 kind: Receiver
@@ -215,7 +190,7 @@ spec:
       namespace: flux-system
   secretRef:
     name: generic-receiver-token
-I also need a Provider, this is the element that defines how messages transmitted, there are providers for Slack and GitHub, but for this case, I’ll use a generic webhook provider which just sends an HTTP body.
+Also need a Provider, this is the element that defines how messages transmitted, there are providers for Slack and GitHub, but for this case, use a generic webhook provider which just sends an HTTP body.
 
 apiVersion: notification.toolkit.fluxcd.io/v1beta1
 kind: Provider
@@ -225,7 +200,7 @@ metadata:
 spec:
   type: generic
   address: http://el-flux-event-listener.default.svc.cluster.local:8080/
-This is using standard Kubernetes DNS resolution to direct events to the Tekton EventListener defined above, when Tekton Triggers creates an EventListener process to receive HTTP requests, it creates a Service and Deployment with the prefix el- and the name of the EventListener object, and I placed it in the default namespace for this demo.
+This is using standard Kubernetes DNS resolution to direct events to the Tekton EventListener defined above, when Tekton Triggers creates an EventListener process to receive HTTP requests, it creates a Service and Deployment with the prefix el- and the name of the EventListener object, and place it in the default namespace.
 
 Next, there’s an Alert which connects the notification to the Provider.
 
@@ -246,7 +221,7 @@ This configures an alert for info-level notifications for the GitRepository obje
 
 Modifying a file in the repository pointed to by the flux-system GitRepository triggers a notification.
 
-I can see the logs of the notification being triggered:
+You can see the logs of the notification being triggered:
 
 $ kubectl logs deploy/notification-controller -n flux-system
 {"level":"info","ts":"2020-12-05T13:15:53.235Z","logger":"event-server","msg":"Dispatching event","object":"flux-system/flux-system","kind":"GitRepository","message":"Fetched revision: main/6fca464c6c124156b9cb3913c229b59148323703"}
